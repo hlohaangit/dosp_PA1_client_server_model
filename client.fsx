@@ -18,19 +18,24 @@ let client () =
 
     let rec sendMessage() =
         async {
-            printfn "Enter a message (or 'exit' to quit):"
-            let message = Console.ReadLine()
-            writer.WriteLine(message)
-            writer.Flush()
+            let response = reader.ReadLine()
+            printfn "Server response: %s" response
+            while true do
+                printfn "Enter a message (or 'exit' to quit):"
+                
+                let message = Console.ReadLine()
+                writer.WriteLine(message)
+                writer.Flush()
 
-            if message.ToLower() <> "exit" then
-                let response = reader.ReadLine()
-                printfn "Server response: %s" response
-                return! sendMessage()
+                if message.ToLower() <> "exit" then
+                    let response = reader.ReadLine()
+                    printfn "Server response: %s" response
+                    // return! sendMessage()
         }
 
+    
     Async.RunSynchronously (sendMessage ())
-    client.Close()
+    //client.Close()
 
 [<EntryPoint>]
 
