@@ -27,10 +27,13 @@ let client () =
                 writer.WriteLine(message)
                 writer.Flush()
 
-                if message.ToLower() <> "exit" then
-                    let response = reader.ReadLine()
+                let response = reader.ReadLine()
+                if response <> "-5" then
                     printfn "Server response: %s" response
-                    // return! sendMessage()
+                else
+                    printfn "exit"
+                    return! sendMessage()
+                
         }
 
     
