@@ -9,34 +9,40 @@ open System.Threading
 
 let port = 12345
 
+let mutable clientSockets = []
 let cancelSource = new CancellationTokenSource()
+
+
 
 let isValidMessage(msg:string) : int = 
     let words = msg.Split[|' '|]
     let mutable res = 0
     if words.Length = 0 then
         res <- -1
-        res
     elif msg = "bye" || msg = "terminate" then
         res <- -5
-        res
     elif(words.[0] <> "add" && words.[0] <> "subtract" && words.[0] <> "multiply") then
         res <- -1
-        res
     elif words[1..].Length < 2 then
         res <- -2
-        res
     elif words[1..].Length > 4 then
         res <- -3
-        res
     else
         for item in words[1..] do
             let integerPattern = Regex("^-?\\d+$")
             let isInt = integerPattern.IsMatch(item)
             if not isInt then
                 res <- -4
-        res
+    res
 
+// let closeAllClients() = 
+//     for cl in clientSockets do
+//         let stream = cl.GetStream()
+//         let writer = new StreamWriter(stream)
+//         writer.WriteLine("-5")
+//         writer.Flush()
+//         cl.Close()
+//     clientSockets = []
 
 let server () =
     let ipAddress = IPAddress.Parse("127.0.0.1")
@@ -64,7 +70,8 @@ let server () =
                         writer.WriteLine(error_code)
                         writer.Flush()
                         if message = "terminate" then
-                            ()
+                            return! handleClient(client, clientNum)
+                        
                     else
                     
                         //matching add, subtract, multiply (operators) with operands 
@@ -83,6 +90,7 @@ let server () =
                             result <- Array.reduce (*) operands
                         
                         | "bye" ->
+                            client.Close()
                             result <- -5
 
                         let response = result
@@ -103,7 +111,8 @@ let server () =
         async {
             let client = listener.AcceptTcpClient()
             count <- count + 1
-            let! _ = Async.StartChild (handleClient(client,count) )
+            clientSockets <- List.append clientSockets [client]
+            let! _ = Async.StartChild (handleClient(client,count))
             return! acceptClients ()
         }
 
