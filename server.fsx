@@ -6,10 +6,11 @@ open System.IO
 open System.Text.RegularExpressions
 open System.Threading.Tasks
 open System.Threading
+open System.Collections.Generic
 
 let port = 12345
 
-let mutable clientSockets = []
+let  clientSockets = new List<TcpClient>()
 let cancelSource = new CancellationTokenSource()
 
 
@@ -50,7 +51,7 @@ let server () =
     listener.Start()
     printfn "Server is running and listening on port %d" port
 
-    let rec handleClient (client : TcpClient, clientNum : int) =
+    let rec handleClient (client : TcpClient, clientNum : int, clientSockets: List<TcpClient>) =
          async {
             try
                 let stream = client.GetStream()
@@ -58,8 +59,8 @@ let server () =
                 let writer = new StreamWriter(stream)
                 writer.WriteLine("Hello!")
                 writer.Flush()
-
-                while true do
+                let mutable takeNextCommand = true
+                while takeNextCommand do
                     let message = reader.ReadLine()
                     printfn "Received: %s"  message
 
@@ -67,13 +68,21 @@ let server () =
                     let error_code = isValidMessage(message)
                     if error_code < 0 then
                         printfn "Responding to client %i with result: %i" clientNum error_code
-                        writer.WriteLine(error_code)
-                        writer.Flush()
-                        if message = "terminate" then
-                            return! handleClient(client, clientNum)
-                        
-                    else
-                    
+                        if message = "bye" then
+                            takeNextCommand <- false
+                            writer.WriteLine("-5")
+                            writer.Flush()
+                        elif message = "terminate" then
+                            for cl in clientSockets do
+                                let st = cl.GetStream()
+                                let wt = new StreamWriter(st)
+                                wt.WriteLine("-5")
+                                wt.Flush()
+                            Environment.Exit(0)
+                        else
+                            writer.WriteLine(error_code)
+                            writer.Flush()
+                    else                    
                         //matching add, subtract, multiply (operators) with operands 
                         let mutable result = 0
                         match words.[0] with
@@ -111,8 +120,8 @@ let server () =
         async {
             let client = listener.AcceptTcpClient()
             count <- count + 1
-            clientSockets <- List.append clientSockets [client]
-            let! _ = Async.StartChild (handleClient(client,count))
+            clientSockets.Add(client)
+            let! _ = Async.StartChild (handleClient(client,count, clientSockets))
             return! acceptClients ()
         }
 
