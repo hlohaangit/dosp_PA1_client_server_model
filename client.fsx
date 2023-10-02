@@ -5,6 +5,7 @@ open System.Text
 open System.IO
 open System.Threading.Tasks
 
+// Server Address and Port to establish socket connection
 let serverAddress = "127.0.0.1"
 let port = 12345
 
@@ -16,8 +17,11 @@ let client () =
 
     printfn "Connected to server at %s:%d" serverAddress port
 
+    // Method to communicate with the Server
     let rec sendMessage() =
-        let rec sendMessage2() =
+
+        // Method to read the messages from the socket asynchronously
+        let rec readMessages() =
             async {
                 while true do
                     let response = reader.ReadLine()
@@ -36,10 +40,12 @@ let client () =
                         printfn "Server response: %s" response 
                     printfn "Sending Command(or 'bye' to quit):"
             }
+
+        // Asynchronous method to read input from the user and send it to the Server
         async {
             let response = reader.ReadLine()
             printfn "Server response: %s" response
-            let!_ = Async.StartChild(sendMessage2())
+            let!_ = Async.StartChild(readMessages())
             printfn "Sending Command(or 'bye' to quit):"
             while true do
                 let message = Console.ReadLine()
@@ -48,14 +54,9 @@ let client () =
                 return ()
                 
         }
-    
-    
 
-    
     Async.RunSynchronously (sendMessage ())
     
-    //client.Close()
-
 [<EntryPoint>]
 
 client ()
