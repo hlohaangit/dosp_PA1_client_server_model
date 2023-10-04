@@ -14,20 +14,23 @@ let startServer() =
     serverProcess.Start() |> ignore
     serverProcess
 
-// Start the client and capture its output
-let startClientAndGetOutput() =
+let startClientAndGetOutput () = 
     printfn "starting client function"
     let clientProcess = new Process()
     clientProcess.StartInfo.FileName <- "dotnet"
     clientProcess.StartInfo.Arguments <- "fsi client.fsx"
-    clientProcess.StartInfo.Arguments <- clientMessageToSend
+    clientProcess.StartInfo.RedirectStandardInput <- true
     clientProcess.StartInfo.RedirectStandardOutput <- true
     clientProcess.StartInfo.UseShellExecute <- false
-    clientProcess.Start() |> ignore
-
+    clientProcess.Start()
+    clientProcess.StandardInput.WriteLine("add 2 4")
+    printfn "sending message"
+    
     let output = clientProcess.StandardOutput.ReadToEnd()
+    printfn "output: %s" output
     clientProcess.WaitForExit()
     output
+
 
 // Test case: Verify client receives expected message from server
 let testCase1() =
