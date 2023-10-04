@@ -38,7 +38,7 @@ let client () =
                         Environment.Exit(0) 
                     else
                         printfn "Server response: %s" response 
-                    printfn "Sending Command(or 'bye' to quit):"
+                    printf "Sending Command:"
             }
 
         // Asynchronous method to read input from the user and send it to the Server
@@ -46,7 +46,7 @@ let client () =
             let response = reader.ReadLine()
             printfn "Server response: %s" response
             let!_ = Async.StartChild(readMessages())
-            printfn "Sending Command(or 'bye' to quit):"
+            printf "Sending Command:"
             while true do
                 let message = Console.ReadLine()
                 writer.WriteLine(message)

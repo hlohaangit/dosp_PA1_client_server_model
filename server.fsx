@@ -88,6 +88,7 @@ let server () =
                             for cl in clientSockets do
                                 let st = cl.GetStream()
                                 let wt = new StreamWriter(st)
+                                takeNextCommand <- false
                                 wt.WriteLine("-5")
                                 wt.Flush()
                             Environment.Exit(0)
